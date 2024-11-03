@@ -148,7 +148,6 @@ func (s *V5WebsocketPublicService) Start(ctx context.Context, errHandler ErrHand
 		defer s.connection.Close()
 
 		_ = s.connection.SetReadDeadline(time.Now().Add(60 * time.Second))
-		_ = s.connection.SetWriteDeadline(time.Now().Add(60 * time.Second))
 		s.connection.SetPongHandler(func(string) error {
 			_ = s.connection.SetReadDeadline(time.Now().Add(60 * time.Second))
 			return nil
@@ -304,6 +303,7 @@ func (s *V5WebsocketPublicService) writeMessage(messageType int, body []byte) er
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	_ = s.connection.SetWriteDeadline(time.Now().Add(60 * time.Second))
 	if err := s.connection.WriteMessage(messageType, body); err != nil {
 		return err
 	}
