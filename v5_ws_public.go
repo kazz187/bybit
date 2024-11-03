@@ -289,7 +289,12 @@ func (s *V5WebsocketPublicService) Ping() error {
 
 // Close :
 func (s *V5WebsocketPublicService) Close() error {
-	if err := s.writeMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "")); err != nil && !errors.Is(err, websocket.ErrCloseSent) {
+	// NOTE: It appears that two messages need to be sent.
+	// REF: https://github.com/hirokisan/bybit/pull/127#issuecomment-1537479346
+	if err := s.writeMessage(websocket.PingMessage, nil); err != nil {
+		return err
+	}
+	if err := s.writeMessage(websocket.TextMessage, []byte(`{"op":"ping"}`)); err != nil {
 		return err
 	}
 	return nil

@@ -249,8 +249,13 @@ func (s *V5WebsocketPrivateService) Run() error {
 
 // Ping :
 func (s *V5WebsocketPrivateService) Ping() error {
-	if err := s.writeMessage(websocket.PingMessage, []byte(`{"op":"ping"}`)); err != nil {
-		return fmt.Errorf("failed to write ping: %w", err)
+	// NOTE: It appears that two messages need to be sent.
+	// REF: https://github.com/hirokisan/bybit/pull/127#issuecomment-1537479346
+	if err := s.writeMessage(websocket.PingMessage, nil); err != nil {
+		return fmt.Errorf("failed to write 1st ping: %w", err)
+	}
+	if err := s.writeMessage(websocket.TextMessage, []byte(`{"op":"ping"}`)); err != nil {
+		return fmt.Errorf("failed to write 2nd ping: %w", err)
 	}
 	return nil
 }
