@@ -3,6 +3,7 @@ package bybit
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/gorilla/websocket"
 )
@@ -29,7 +30,7 @@ func (s *V5WebsocketPrivateService) SubscribeWallet(
 		return nil, err
 	}
 	if err := s.writeMessage(websocket.TextMessage, buf); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to write buf in subscribe wallet: %w", err)
 	}
 	return func() error {
 		param := struct {
@@ -44,7 +45,7 @@ func (s *V5WebsocketPrivateService) SubscribeWallet(
 			return err
 		}
 		if err := s.writeMessage(websocket.TextMessage, []byte(buf)); err != nil {
-			return err
+			return fmt.Errorf("failed to write buf in unsubscribe wallet: %w", err)
 		}
 		s.removeParamWalletFunc(key)
 		return nil

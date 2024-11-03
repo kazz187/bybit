@@ -3,6 +3,7 @@ package bybit
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/gorilla/websocket"
 )
@@ -29,7 +30,7 @@ func (s *V5WebsocketPrivateService) SubscribeOrder(
 		return nil, err
 	}
 	if err := s.writeMessage(websocket.TextMessage, buf); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to write buf in subscribe order: %w", err)
 	}
 	return func() error {
 		param := struct {
@@ -44,7 +45,7 @@ func (s *V5WebsocketPrivateService) SubscribeOrder(
 			return err
 		}
 		if err := s.writeMessage(websocket.TextMessage, []byte(buf)); err != nil {
-			return err
+			return fmt.Errorf("failed to write buf in unsubscribe order: %w", err)
 		}
 		s.removeParamOrderFunc(key)
 		return nil

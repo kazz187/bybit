@@ -116,7 +116,7 @@ func (s *V5WebsocketPrivateService) Subscribe() error {
 		return err
 	}
 	if err := s.writeMessage(websocket.TextMessage, param); err != nil {
-		return err
+		return fmt.Errorf("failed to write subscribe message: %w", err)
 	}
 	return nil
 }
@@ -252,10 +252,10 @@ func (s *V5WebsocketPrivateService) Ping() error {
 	// NOTE: It appears that two messages need to be sent.
 	// REF: https://github.com/hirokisan/bybit/pull/127#issuecomment-1537479346
 	if err := s.writeMessage(websocket.PingMessage, nil); err != nil {
-		return err
+		return fmt.Errorf("failed to write 1st ping: %w", err)
 	}
 	if err := s.writeMessage(websocket.TextMessage, []byte(`{"op":"ping"}`)); err != nil {
-		return err
+		return fmt.Errorf("failed to write 2nd ping: %w", err)
 	}
 	return nil
 }
@@ -263,7 +263,7 @@ func (s *V5WebsocketPrivateService) Ping() error {
 // Close :
 func (s *V5WebsocketPrivateService) Close() error {
 	if err := s.writeMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "")); err != nil && !errors.Is(err, websocket.ErrCloseSent) {
-		return err
+		return fmt.Errorf("failed to write close message: %w", err)
 	}
 	return nil
 }
@@ -273,7 +273,7 @@ func (s *V5WebsocketPrivateService) writeMessage(messageType int, body []byte) e
 	defer s.mu.Unlock()
 
 	if err := s.connection.WriteMessage(messageType, body); err != nil {
-		return err
+		return fmt.Errorf("failed to write message: %w", err)
 	}
 	return nil
 }
