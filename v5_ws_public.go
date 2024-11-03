@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"os/signal"
 	"strings"
@@ -280,20 +281,15 @@ func (s *V5WebsocketPublicService) Run() error {
 
 // Ping :
 func (s *V5WebsocketPublicService) Ping() error {
-	// NOTE: It appears that two messages need to be sent.
-	// REF: https://github.com/hirokisan/bybit/pull/127#issuecomment-1537479346
-	if err := s.writeMessage(websocket.PingMessage, nil); err != nil {
-		return err
-	}
-	if err := s.writeMessage(websocket.TextMessage, []byte(`{"op":"ping"}`)); err != nil {
-		return err
+	if err := s.writeControl(websocket.PingMessage, []byte(`{"op":"ping"}`)); err != nil {
+		return fmt.Errorf("failed to write 1st ping: %w", err)
 	}
 	return nil
 }
 
 // Close :
 func (s *V5WebsocketPublicService) Close() error {
-	if err := s.writeMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "")); err != nil && !errors.Is(err, websocket.ErrCloseSent) {
+	if err := s.writeControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "")); err != nil && !errors.Is(err, websocket.ErrCloseSent) {
 		return err
 	}
 	return nil
@@ -306,6 +302,16 @@ func (s *V5WebsocketPublicService) writeMessage(messageType int, body []byte) er
 	_ = s.connection.SetWriteDeadline(time.Now().Add(60 * time.Second))
 	if err := s.connection.WriteMessage(messageType, body); err != nil {
 		return err
+	}
+	return nil
+}
+
+func (s *V5WebsocketPublicService) writeControl(messageType int, body []byte) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if err := s.connection.WriteControl(messageType, body, time.Now().Add(60*time.Second)); err != nil {
+		return fmt.Errorf("failed to write control: %w", err)
 	}
 	return nil
 }
