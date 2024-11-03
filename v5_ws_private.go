@@ -183,12 +183,12 @@ func (s *V5WebsocketPrivateService) Run() error {
 	_ = s.connection.SetReadDeadline(time.Now().Add(60 * time.Second))
 	_, message, err := s.connection.ReadMessage()
 	if err != nil {
-		return err
+		return fmt.Errorf("read message: %w", err)
 	}
 
 	topic, err := s.judgeTopic(message)
 	if err != nil {
-		return err
+		return fmt.Errorf("judge topic: %w", err)
 	}
 	switch topic {
 	case V5WebsocketPrivateTopicPong:
@@ -198,50 +198,50 @@ func (s *V5WebsocketPrivateService) Run() error {
 	case V5WebsocketPrivateTopicOrder:
 		var resp V5WebsocketPrivateOrderResponse
 		if err := s.parseResponse(message, &resp); err != nil {
-			return err
+			return fmt.Errorf("order parse response: %w", err)
 		}
 		f, err := s.retrieveOrderFunc(resp.Key())
 		if err != nil {
-			return err
+			return fmt.Errorf("order retrieve order func: %w", err)
 		}
 		if err := f(resp); err != nil {
-			return err
+			return fmt.Errorf("order f(resp): %w", err)
 		}
 	case V5WebsocketPrivateTopicPosition:
 		var resp V5WebsocketPrivatePositionResponse
 		if err := s.parseResponse(message, &resp); err != nil {
-			return err
+			return fmt.Errorf("position parse response: %w", err)
 		}
 		f, err := s.retrievePositionFunc(resp.Key())
 		if err != nil {
-			return err
+			return fmt.Errorf("position retrieve position func: %w", err)
 		}
 		if err := f(resp); err != nil {
-			return err
+			return fmt.Errorf("position f(resp): %w", err)
 		}
 	case V5WebsocketPrivateTopicExecution:
 		var resp V5WebsocketPrivateExecutionResponse
 		if err := s.parseResponse(message, &resp); err != nil {
-			return err
+			return fmt.Errorf("execution parse response: %w", err)
 		}
 		f, err := s.retrieveExecutionFunc(resp.Key())
 		if err != nil {
-			return err
+			return fmt.Errorf("execution retrieve execution func: %w", err)
 		}
 		if err := f(resp); err != nil {
-			return err
+			return fmt.Errorf("execution f(resp): %w", err)
 		}
 	case V5WebsocketPrivateTopicWallet:
 		var resp V5WebsocketPrivateWalletResponse
 		if err := s.parseResponse(message, &resp); err != nil {
-			return err
+			return fmt.Errorf("wallet parse response: %w", err)
 		}
 		f, err := s.retrieveWalletFunc(resp.Key())
 		if err != nil {
-			return err
+			return fmt.Errorf("wallet retrieve wallet func: %w", err)
 		}
 		if err := f(resp); err != nil {
-			return err
+			return fmt.Errorf("wallet f(resp): %w", err)
 		}
 	}
 
@@ -251,7 +251,7 @@ func (s *V5WebsocketPrivateService) Run() error {
 // Ping :
 func (s *V5WebsocketPrivateService) Ping() error {
 	if err := s.writeControl(websocket.PingMessage, []byte(`{"op":"ping"}`)); err != nil {
-		return err
+		return fmt.Errorf("ping: %w", err)
 	}
 	return nil
 }
@@ -259,7 +259,7 @@ func (s *V5WebsocketPrivateService) Ping() error {
 // Close :
 func (s *V5WebsocketPrivateService) Close() error {
 	if err := s.writeControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "")); err != nil && !errors.Is(err, websocket.ErrCloseSent) {
-		return err
+		return fmt.Errorf("close: %w", err)
 	}
 	return nil
 }
@@ -270,7 +270,7 @@ func (s *V5WebsocketPrivateService) writeMessage(messageType int, body []byte) e
 
 	_ = s.connection.SetWriteDeadline(time.Now().Add(60 * time.Second))
 	if err := s.connection.WriteMessage(messageType, body); err != nil {
-		return err
+		return fmt.Errorf("write message: %w", err)
 	}
 	return nil
 }
@@ -280,7 +280,7 @@ func (s *V5WebsocketPrivateService) writeControl(messageType int, body []byte) e
 	defer s.mu.Unlock()
 
 	if err := s.connection.WriteControl(messageType, body, time.Now().Add(60*time.Second)); err != nil {
-		return err
+		return fmt.Errorf("write control: %w", err)
 	}
 	return nil
 }
