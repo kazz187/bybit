@@ -180,6 +180,7 @@ func (s *V5WebsocketPrivateService) Start(ctx context.Context, errHandler ErrHan
 
 // Run :
 func (s *V5WebsocketPrivateService) Run() error {
+	_ = s.connection.SetReadDeadline(time.Now().Add(60 * time.Second))
 	_, message, err := s.connection.ReadMessage()
 	if err != nil {
 		return err
