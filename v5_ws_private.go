@@ -132,7 +132,6 @@ func (s *V5WebsocketPrivateService) Start(ctx context.Context, errHandler ErrHan
 		defer close(done)
 		defer s.connection.Close()
 		_ = s.connection.SetReadDeadline(time.Now().Add(60 * time.Second))
-		_ = s.connection.SetWriteDeadline(time.Now().Add(60 * time.Second))
 		s.connection.SetPongHandler(func(string) error {
 			_ = s.connection.SetReadDeadline(time.Now().Add(60 * time.Second))
 			return nil
@@ -272,6 +271,7 @@ func (s *V5WebsocketPrivateService) writeMessage(messageType int, body []byte) e
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	_ = s.connection.SetWriteDeadline(time.Now().Add(60 * time.Second))
 	if err := s.connection.WriteMessage(messageType, body); err != nil {
 		return fmt.Errorf("failed to write message: %w", err)
 	}
